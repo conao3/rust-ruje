@@ -6,3 +6,4 @@ description = "Clojure implementation in Rust"
 license = "Apache-2.0"
 
 [dependencies]
+anyhow = "1.0.95"

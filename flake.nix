@@ -25,7 +25,12 @@
         formatter = pkgs.nixpkgs-fmt;
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
-            rust-bin.stable.latest.default
+            (rust-bin.stable.latest.default.override {
+              extensions = [
+                "rust-src"
+                "rust-analyzer"
+              ];
+            })
           ];
         };
         packages.default = pkgs.callPackage ./default.nix { };
