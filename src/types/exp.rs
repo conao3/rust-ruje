@@ -67,6 +67,12 @@ impl fmt::Display for RujeExp {
     }
 }
 
+impl From<RujeAtom> for RujeExp {
+    fn from(value: RujeAtom) -> Self {
+        RujeExp::Atom(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

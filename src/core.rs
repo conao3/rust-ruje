@@ -1,17 +1,20 @@
 use anyhow::Result;
 
-pub fn read(input: &str) -> Result<&str> {
+use crate::{reader, types::RujeExp};
+
+pub fn read(input: &str) -> Result<RujeExp> {
+    let mut reader = reader::Reader::new(input);
+    Ok(reader.read()?)
+}
+
+pub fn eval(input: RujeExp) -> Result<RujeExp> {
     Ok(input)
 }
 
-pub fn eval(input: &str) -> Result<&str> {
-    Ok(input)
+pub fn print(input: RujeExp) -> Result<String> {
+    Ok(input.to_string())
 }
 
-pub fn print(input: &str) -> Result<&str> {
-    Ok(input)
-}
-
-pub fn rep(input: &str) -> Result<&str> {
+pub fn rep(input: &str) -> Result<String> {
     Ok(print(eval(read(input)?)?)?)
 }
