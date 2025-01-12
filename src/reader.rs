@@ -223,27 +223,48 @@ mod tests {
     #[test]
     fn test_read_list() {
         let mut reader = Reader::new("()");
-        let list = reader.read().unwrap();
-        assert_eq!(list, RujeExp::List(vec![]));
+        let res = reader.read().unwrap();
+        assert_eq!(res, RujeExp::List(vec![]));
 
         let mut reader = Reader::new("(123 456)");
-        let list = reader.read().unwrap();
+        let res = reader.read().unwrap();
         assert_eq!(
-            list,
+            res,
             RujeExp::List(vec![RujeAtom::Int(123).into(), RujeAtom::Int(456).into()])
+        );
+
+        let mut reader = Reader::new("(123 (456 789))");
+        let res = reader.read().unwrap();
+        assert_eq!(
+            res,
+            RujeExp::List(vec![
+                RujeAtom::Int(123).into(),
+                RujeExp::List(vec![RujeAtom::Int(456).into(), RujeAtom::Int(789).into()])
+            ])
+        );
+
+        let mut reader = Reader::new("(123 (456 789) 100)");
+        let res = reader.read().unwrap();
+        assert_eq!(
+            res,
+            RujeExp::List(vec![
+                RujeAtom::Int(123).into(),
+                RujeExp::List(vec![RujeAtom::Int(456).into(), RujeAtom::Int(789).into()]),
+                RujeAtom::Int(100).into()
+            ])
         );
     }
 
     #[test]
     fn test_read_vector() {
         let mut reader = Reader::new("[]");
-        let list = reader.read().unwrap();
-        assert_eq!(list, RujeExp::Vector(vec![]));
+        let res = reader.read().unwrap();
+        assert_eq!(res, RujeExp::Vector(vec![]));
 
         let mut reader = Reader::new("[123 456]");
-        let list = reader.read().unwrap();
+        let res = reader.read().unwrap();
         assert_eq!(
-            list,
+            res,
             RujeExp::Vector(vec![RujeAtom::Int(123).into(), RujeAtom::Int(456).into()])
         );
     }
@@ -251,13 +272,13 @@ mod tests {
     #[test]
     fn test_read_map() {
         let mut reader = Reader::new("{}");
-        let list = reader.read().unwrap();
-        assert_eq!(list, RujeExp::Map(vec![]));
+        let res = reader.read().unwrap();
+        assert_eq!(res, RujeExp::Map(vec![]));
 
         let mut reader = Reader::new("{a 123}");
-        let list = reader.read().unwrap();
+        let res = reader.read().unwrap();
         assert_eq!(
-            list,
+            res,
             RujeExp::Map(vec![(
                 RujeAtom::Symbol("a".to_string()).into(),
                 RujeAtom::Int(123).into()
@@ -268,13 +289,13 @@ mod tests {
     #[test]
     fn test_read_set() {
         let mut reader = Reader::new("#{}");
-        let list = reader.read().unwrap();
-        assert_eq!(list, RujeExp::Set(vec![]));
+        let res = reader.read().unwrap();
+        assert_eq!(res, RujeExp::Set(vec![]));
 
         let mut reader = Reader::new("#{a 123}");
-        let list = reader.read().unwrap();
+        let res = reader.read().unwrap();
         assert_eq!(
-            list,
+            res,
             RujeExp::Set(vec![
                 RujeAtom::Symbol("a".to_string()).into(),
                 RujeAtom::Int(123).into(),
