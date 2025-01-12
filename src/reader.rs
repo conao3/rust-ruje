@@ -1,5 +1,6 @@
 use crate::types::{RujeAtom, RujeExp};
 use anyhow::anyhow;
+use anyhow::bail;
 use anyhow::Result;
 
 use regex::Regex;
@@ -48,6 +49,36 @@ impl Reader<'_> {
         Err(anyhow::anyhow!("Invalid input"))
     }
 
+    fn read_list(&mut self) -> Result<RujeExp> {
+        self.input = &self.input[1..]; // skip '('
+
+        let c = self.input.chars().next();
+
+        match c {
+            None => bail!("Unexpected end of input"),
+            Some(')') => {
+                self.input = &self.input[1..]; // skip ')'
+                return Ok(RujeExp::List(vec![]));
+            }
+            Some(_) => {
+                let mut list = vec![];
+                loop {
+                    let exp = self.read()?;
+                    list.push(exp);
+                    self.skip_whitespace();
+                    match self.input.chars().next() {
+                        Some(')') => {
+                            self.input = &self.input[1..]; // skip ')'
+                            return Ok(RujeExp::List(list));
+                        }
+                        Some(_) => continue,
+                        None => bail!("Unexpected end of input"),
+                    }
+                }
+            }
+        }
+    }
+
     pub fn read(&mut self) -> Result<RujeExp> {
         self.skip_whitespace();
 
@@ -58,7 +89,8 @@ impl Reader<'_> {
             .ok_or(anyhow!("Unexpected end of input"))?;
 
         match c {
-            _ => self.read_atom()
+            '(' => self.read_list(),
+            _ => self.read_atom(),
         }
     }
 }
@@ -81,5 +113,15 @@ mod tests {
         let mut reader = Reader::new("abc");
         let atom = reader.read_atom().unwrap();
         assert_eq!(atom, RujeAtom::Symbol("abc".to_string()).into());
+    }
+
+    #[test]
+    fn test_read_list() {
+        let mut reader = Reader::new("(123 456)");
+        let list = reader.read().unwrap();
+        assert_eq!(
+            list,
+            RujeExp::List(vec![RujeAtom::Int(123).into(), RujeAtom::Int(456).into()])
+        );
     }
 }
