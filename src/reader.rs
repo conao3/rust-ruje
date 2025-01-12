@@ -24,30 +24,73 @@ impl Reader<'_> {
         self.input = self.input.trim_start();
     }
 
+    fn read_string(&mut self) -> Result<RujeExp> {
+        let mut s = String::new();
+        self.input = &self.input[1..]; // Skip opening quote
+
+        while let Some(c) = self.input.chars().next() {
+            if c == '"' {
+                self.input = &self.input[1..]; // Skip closing quote
+                return Ok(RujeAtom::String(s).into());
+            }
+
+            if c == '\\' {
+                self.input = &self.input[1..];
+                if let Some(next) = self.input.chars().next() {
+                    match next {
+                        'n' => s.push('\n'),
+                        't' => s.push('\t'),
+                        'r' => s.push('\r'),
+                        '"' => s.push('"'),
+                        '\\' => s.push('\\'),
+                        _ => bail!("Invalid escape sequence"),
+                    }
+                    self.input = &self.input[1..];
+                } else {
+                    bail!("Unexpected end of input after escape character");
+                }
+            } else {
+                s.push(c);
+                self.input = &self.input[1..];
+            }
+        }
+
+        bail!("Unterminated string literal")
+    }
+
     fn read_atom(&mut self) -> Result<RujeExp> {
         self.skip_whitespace();
 
-        if let Some(m) = INT_PATTERN.captures(self.input) {
-            let s = m.get(1).unwrap().as_str();
-            let value = s.parse::<i64>().unwrap();
-            self.input = &self.input[s.len()..];
-            return Ok(RujeAtom::Int(value).into());
-        }
+        let c = self.input.chars().next();
 
-        if let Some(m) = FLOAT_PATTERN.captures(self.input) {
-            let s = m.get(1).unwrap().as_str();
-            let value = s.parse::<f64>().unwrap();
-            self.input = &self.input[s.len()..];
-            return Ok(RujeAtom::Float(value).into());
-        }
+        match c {
+            None => bail!("Unexpected end of input"),
+            Some('"') => self.read_string(),
+            Some(_) => {
+                if let Some(m) = INT_PATTERN.captures(self.input) {
+                    let s = m.get(1).unwrap().as_str();
+                    let value = s.parse::<i64>().unwrap();
+                    self.input = &self.input[s.len()..];
+                    return Ok(RujeAtom::Int(value).into());
+                }
 
-        if let Some(m) = SYMBOL_PATTERN.captures(self.input) {
-            let s = m.get(0).unwrap().as_str();
-            let value = s.to_string();
-            self.input = &self.input[s.len()..];
-            return Ok(RujeAtom::Symbol(value).into());
+                if let Some(m) = FLOAT_PATTERN.captures(self.input) {
+                    let s = m.get(1).unwrap().as_str();
+                    let value = s.parse::<f64>().unwrap();
+                    self.input = &self.input[s.len()..];
+                    return Ok(RujeAtom::Float(value).into());
+                }
+
+                if let Some(m) = SYMBOL_PATTERN.captures(self.input) {
+                    let s = m.get(0).unwrap().as_str();
+                    let value = s.to_string();
+                    self.input = &self.input[s.len()..];
+                    return Ok(RujeAtom::Symbol(value).into());
+                }
+
+                bail!("Invalid input")
+            }
         }
-        Err(anyhow::anyhow!("Invalid input"))
     }
 
     fn read_list(&mut self) -> Result<RujeExp> {
@@ -218,6 +261,18 @@ mod tests {
         let mut reader = Reader::new("abc");
         let atom = reader.read_atom().unwrap();
         assert_eq!(atom, RujeAtom::Symbol("abc".to_string()).into());
+
+        let mut reader = Reader::new("\"abc\"");
+        let atom = reader.read_atom().unwrap();
+        assert_eq!(atom, RujeAtom::String("abc".to_string()).into());
+
+        let mut reader = Reader::new("\"ab c\"");
+        let atom = reader.read_atom().unwrap();
+        assert_eq!(atom, RujeAtom::String("ab c".to_string()).into());
+
+        let mut reader = Reader::new("\"ab\\nc\"");
+        let atom = reader.read_atom().unwrap();
+        assert_eq!(atom, RujeAtom::String("ab\nc".to_string()).into());
     }
 
     #[test]
