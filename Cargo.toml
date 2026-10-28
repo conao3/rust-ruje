@@ -6,5 +6,5 @@ description = "Clojure implementation in Rust"
 license = "Apache-2.0"
 
 [dependencies]
-anyhow = "1.0.95"
-regex = "1.11.1"
+anyhow = "1.0.104"
+regex = "1.13.1"
