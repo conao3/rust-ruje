@@ -7,4 +7,4 @@ license = "Apache-2.0"
 
 [dependencies]
 anyhow = "1.0.104"
-regex = "1.13.1"
+regex = "1.13.2"
